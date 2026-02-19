@@ -4,7 +4,6 @@ version = "1.0.0"
 description = "Post processing toolbox for the Virtual Encoder"
 requires-python = ">=3.11"
 dependencies = [
-  "common",
   "matplotlib>=3.10.7",
   "numpy~=1.26.4",
   "opencv-python>=4.11.0.86",
@@ -20,6 +19,5 @@ build-backend = "setuptools.build_meta"
 include = [ "post_processing" ]
 
 [tool.uv.sources]
-visual-odometer = { path = "../../visual-odometer", editable = true }
-common = { path = "../common", editable = true }
+visual-odometer = { git = "https://github.com/odometriavisual/visual-odometer" }
 
