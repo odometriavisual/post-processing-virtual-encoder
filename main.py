@@ -4,14 +4,14 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
+import tqdm
 from visual_odometer import VisualOdometer
 
 from post_processing.utils.ensaio import EnsaioReader
 
 
 def plot_displacements_2d(path, trajectory, displacements):
-    plt.figure(path.stem)
-    plt.title(path.stem)
+    plt.figure(figsize=(10, 6))
     axis0 = plt.subplot2grid((2, 3), (0, 0), 2, 2)
     axis1 = plt.subplot2grid((2, 3), (0, 2), 1, 1)
     axis2 = plt.subplot2grid((2, 3), (1, 2), 1, 1)
@@ -40,6 +40,7 @@ def plot_displacements_2d(path, trajectory, displacements):
     axis2.plot(phase)
 
     plt.savefig(path.with_suffix(".jpg"))
+    plt.close()
 
 
 def process_ensaio(path):
@@ -52,14 +53,15 @@ def process_ensaio(path):
 
     imgs = ensaio.get_all_imgs()
 
-    for i, (timestamp, img) in enumerate(imgs):
+    for i, (timestamp, img) in tqdm.tqdm(
+        enumerate(imgs), desc=f"{path.stem}", total=len(imgs)
+    ):
         odometer.feed_image(img)
 
         dx, dy = odometer.get_displacement()
         displacements.append([dx, dy])
         quaternions.append([1, 0, 0, 0])
         timestamps.append(timestamp)
-        print(f"{path.stem}: {i}/{ensaio.get_img_count()}")
 
     displacements = np.array(displacements)
     quaternions = np.array(quaternions)
@@ -101,23 +103,29 @@ def main(args):
 
                 path = root / pathlib.Path(file)
 
-                data = try_load(path.with_suffix(".npz"))
-                if not data or args.force_processing:
-                    trajectory, displacements, quaternions, timestamps = process_ensaio(
-                        path
-                    )
-                    save(
-                        path.with_suffix(".npz"),
-                        trajectory,
-                        displacements,
-                        quaternions,
-                        timestamps,
-                    )
-                else:
-                    print(f"Found existing cache for {path.stem}, using it...")
-                    trajectory, displacements, quaternions, timestamps = data
+                try:
+                    data = try_load(path.with_suffix(".npz"))
 
-                plot_displacements_2d(path, trajectory, abs(displacements))
+                    if not data or args.force_processing:
+                        trajectory, displacements, quaternions, timestamps = (
+                            process_ensaio(path)
+                        )
+                        save(
+                            path.with_suffix(".npz"),
+                            trajectory,
+                            displacements,
+                            quaternions,
+                            timestamps,
+                        )
+                    else:
+                        print(f"Found existing cache for {path.stem}, using it...")
+                        trajectory, displacements, quaternions, timestamps = data
+
+                    plot_displacements_2d(path, trajectory, abs(displacements))
+
+                except Exception as e:
+                    print(f"Error processing {path.stem}: {e}")
+
     else:
         process_ensaio(pathlib.Path(args.path))
 
