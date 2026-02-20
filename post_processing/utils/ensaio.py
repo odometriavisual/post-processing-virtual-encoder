@@ -11,17 +11,14 @@ from numpy.typing import NDArray
 class EnsaioReader:
     def __init__(
         self,
-        filename: str,
+        zip_path: Path,
         *,
-        dir: str = ".",
         first_pulse_timestamp: int = 0,
         exposure: int = 0,
         px_p_mm: float = 0,
         pulses_period: int = 0,
     ):
-        self.__filename = filename
-        self.__dir = Path(dir)
-        self.__zip_path = self.__dir / self.__filename
+        self.__zip_path = zip_path
         self.__zip = ZipFile(self.__zip_path, "r")
 
         calibration_filename = [
@@ -72,10 +69,7 @@ class EnsaioReader:
 
 
     def get_name(self) -> str:
-        return self.__filename
-
-    def get_filename(self) -> str:
-        return self.__filename
+        return self.__zip_path.name
 
     def get_first_pulse_timestamp(self) -> int:
         return self.__first_pulse_timestamp
@@ -101,7 +95,7 @@ class EnsaioReader:
             return (
                 int(Path(filename).stem),
                 cv2.imdecode(
-                    np.frombuffer(zip.read(filename), dtype=np.uint8),
+                    np.frombuffer(self.__zip.read(filename), dtype=np.uint8),
                     cv2.IMREAD_GRAYSCALE,
                 ),
             )
@@ -116,7 +110,7 @@ class EnsaioReader:
                     (
                         int(Path(filename).stem),
                         cv2.imdecode(
-                            np.frombuffer(zip.read(filename), dtype=np.uint8),
+                            np.frombuffer(self.__zip.read(filename), dtype=np.uint8),
                             cv2.IMREAD_GRAYSCALE,
                         ),
                     )
