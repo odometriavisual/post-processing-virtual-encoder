@@ -11,15 +11,20 @@ from visual_odometer import VisualOdometer
 from post_processing.utils.ensaio import EnsaioReader
 
 
-def plot_displacements_2d(path, trajectory, displacements):
+def plot_displacements_2d(args, path, trajectory, displacements):
     plt.figure(figsize=(10, 6))
     axis0 = plt.subplot2grid((2, 3), (0, 0), 2, 2)
     axis1 = plt.subplot2grid((2, 3), (0, 2), 1, 1)
     axis2 = plt.subplot2grid((2, 3), (1, 2), 1, 1)
 
     axis0.plot(trajectory[:, 0], trajectory[:, 1], label="Trajetória")
-    axis0.set_xlabel("Deslocamento X")
-    axis0.set_ylabel("Deslocamento Y")
+    if args.px:
+        axis0.set_xlabel("Deslocamento X / (px)")
+        axis0.set_ylabel("Deslocamento Y / (px)")
+    else:
+        axis0.set_xlabel("Deslocamento X / (mm)")
+        axis0.set_ylabel("Deslocamento Y / (mm)")
+
     axis0.set_title(f"{path.stem}")
     axis0.grid(True)
     axis0.legend()
@@ -184,10 +189,11 @@ def process_ensaio(args, path):
                 print(f"Found existing cache for {path.stem}, using it...")
                 trajectory, displacements, quaternions, timestamps = data
 
-            plot_displacements_2d(path, trajectory, abs(displacements))
+            plot_displacements_2d(args, path, trajectory, abs(displacements))
 
     except Exception as e:
         print(f"Error processing {path.stem}: {e}")
+
 
 def main(args):
     if args.recursive:
@@ -223,6 +229,11 @@ if __name__ == "__main__":
         "--rt",
         help="provide a npz file containing the reference trajectory",
         action="store",
+    )
+    parser.add_argument(
+        "--px",
+        help="ignore spatial resolution and generate results in pixels",
+        action="store_true",
     )
     parser.add_argument(
         "--force-processing",
