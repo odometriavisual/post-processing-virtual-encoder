@@ -102,7 +102,7 @@ def main(args):
                 path = root / pathlib.Path(file)
 
                 data = try_load(path.with_suffix(".npz"))
-                if not data:
+                if not data or args.force_processing:
                     trajectory, displacements, quaternions, timestamps = process_ensaio(
                         path
                     )
@@ -114,6 +114,7 @@ def main(args):
                         timestamps,
                     )
                 else:
+                    print(f"Found existing cache for {path.stem}, using it...")
                     trajectory, displacements, quaternions, timestamps = data
 
                 plot_displacements_2d(path, trajectory, abs(displacements))
@@ -142,6 +143,12 @@ if __name__ == "__main__":
         "--rt",
         help="provide a npz file containing the reference trajectory",
         action="store",
+    )
+    parser.add_argument(
+        "--force-processing",
+        "-f",
+        help="ignore existing caches and (re)process displacements",
+        action="store_true",
     )
 
     parser.add_argument("path", nargs="?", default=False)
