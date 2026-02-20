@@ -47,7 +47,9 @@ def process_ensaio(path):
     ensaio = EnsaioReader(path)
 
     odometer = VisualOdometer(
-        (480, 640), frequency_window_params={"factor": 1.0}, async_mode=True
+        ensaio.get_img(0)[1].shape,
+        frequency_window_params={"factor": 1.0},
+        async_mode=True,
     )
     displacements, quaternions, timestamps = [], [], []
 
