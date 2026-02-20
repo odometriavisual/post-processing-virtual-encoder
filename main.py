@@ -8,8 +8,10 @@ from visual_odometer import VisualOdometer
 
 from post_processing.utils.ensaio import EnsaioReader
 
-def plot_displacements_2d(root, name, trajectory, displacements):
-    plt.figure(name)
+
+def plot_displacements_2d(path, trajectory, displacements):
+    plt.figure(path.stem)
+    plt.title(path.stem)
     axis0 = plt.subplot2grid((2, 3), (0, 0), 2, 2)
     axis1 = plt.subplot2grid((2, 3), (0, 2), 1, 1)
     axis2 = plt.subplot2grid((2, 3), (1, 2), 1, 1)
@@ -37,14 +39,15 @@ def plot_displacements_2d(root, name, trajectory, displacements):
     phase = np.arctan2(displacements[:, 1], displacements[:, 0])
     axis2.plot(phase)
 
-    plt.savefig(f"{root}/{name}.png")
+    plt.savefig(path.with_suffix(".jpg"))
 
 
 def process_ensaio(path):
     ensaio = EnsaioReader(path)
-    name = path.name
 
-    odometer = VisualOdometer((480, 640), frequency_window_params={"factor": 1.0}, async_mode=True)
+    odometer = VisualOdometer(
+        (480, 640), frequency_window_params={"factor": 1.0}, async_mode=True
+    )
     displacements, quaternions, timestamps = [], [], []
 
     imgs = ensaio.get_all_imgs()
@@ -56,7 +59,7 @@ def process_ensaio(path):
         displacements.append([dx, dy])
         quaternions.append([1, 0, 0, 0])
         timestamps.append(timestamp)
-        print(f"{name}: {i}/{ensaio.get_img_count()}")
+        print(f"{path.stem}: {i}/{ensaio.get_img_count()}")
 
     displacements = np.array(displacements)
     quaternions = np.array(quaternions)
@@ -64,6 +67,30 @@ def process_ensaio(path):
     trajectory = np.cumsum(displacements, axis=0)
 
     return trajectory, displacements, quaternions, timestamps
+
+
+def try_load(path):
+    if path.is_file():
+        data = np.load(path, allow_pickle=True)
+        return (
+            data["trajectory"],
+            data["displacements"],
+            data["quaternions"],
+            data["timestamps"],
+        )
+
+    return False
+
+
+def save(path, trajectory, displacements, quaternions, timestamps):
+    np.savez(
+        path,
+        trajectory=trajectory,
+        displacements=displacements,
+        quaternions=quaternions,
+        timestamps=timestamps,
+    )
+
 
 def main(args):
     if args.recursive:
@@ -73,8 +100,23 @@ def main(args):
                     continue
 
                 path = root / pathlib.Path(file)
-                trajectory, displacements, quaternions, timestamps = process_ensaio(path)
-                plot_displacements_2d(root, path.name, trajectory, abs(displacements))
+
+                data = try_load(path.with_suffix(".npz"))
+                if not data:
+                    trajectory, displacements, quaternions, timestamps = process_ensaio(
+                        path
+                    )
+                    save(
+                        path.with_suffix(".npz"),
+                        trajectory,
+                        displacements,
+                        quaternions,
+                        timestamps,
+                    )
+                else:
+                    trajectory, displacements, quaternions, timestamps = data
+
+                plot_displacements_2d(path, trajectory, abs(displacements))
     else:
         process_ensaio(pathlib.Path(args.path))
 
