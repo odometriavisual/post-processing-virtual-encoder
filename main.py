@@ -44,7 +44,7 @@ def plot_displacements_2d(path, trajectory, displacements):
     plt.close()
 
 
-def process_ensaio(path):
+def compute_displacements(path):
     ensaio = EnsaioReader(path)
 
     odometer = VisualOdometer(
@@ -161,6 +161,34 @@ def save(path, trajectory, displacements, quaternions, timestamps):
     )
 
 
+def process_ensaio(args, path):
+    try:
+        if args.calibration:
+            calibrate_spatial_resolution(path)
+
+        else:
+            data = try_load(path.with_suffix(".npz"))
+
+            if not data or args.force_processing:
+                trajectory, displacements, quaternions, timestamps = (
+                    compute_displacements(path)
+                )
+                save(
+                    path.with_suffix(".npz"),
+                    trajectory,
+                    displacements,
+                    quaternions,
+                    timestamps,
+                )
+            else:
+                print(f"Found existing cache for {path.stem}, using it...")
+                trajectory, displacements, quaternions, timestamps = data
+
+            plot_displacements_2d(path, trajectory, abs(displacements))
+
+    except Exception as e:
+        print(f"Error processing {path.stem}: {e}")
+
 def main(args):
     if args.recursive:
         for root, dirs, files in pathlib.Path(args.path).walk():
@@ -169,36 +197,9 @@ def main(args):
                     continue
 
                 path = root / pathlib.Path(file)
-
-                try:
-                    if args.calibration:
-                        calibrate_spatial_resolution(path)
-
-                    else:
-                        data = try_load(path.with_suffix(".npz"))
-
-                        if not data or args.force_processing:
-                            trajectory, displacements, quaternions, timestamps = (
-                                process_ensaio(path)
-                            )
-                            save(
-                                path.with_suffix(".npz"),
-                                trajectory,
-                                displacements,
-                                quaternions,
-                                timestamps,
-                            )
-                        else:
-                            print(f"Found existing cache for {path.stem}, using it...")
-                            trajectory, displacements, quaternions, timestamps = data
-
-                        plot_displacements_2d(path, trajectory, abs(displacements))
-
-                except Exception as e:
-                    print(f"Error processing {path.stem}: {e}")
-
+                process_ensaio(args, path)
     else:
-        process_ensaio(pathlib.Path(args.path))
+        process_ensaio(args, pathlib.Path(args.path))
 
 
 if __name__ == "__main__":
