@@ -27,17 +27,11 @@ def plot_displacements_2d(args, path, trajectory, displacements):
 
     axis0.plot(trajectory[:, 0], trajectory[:, 1], label="Trajetória")
 
+
     axis0.set_title(f"{path.stem}")
     axis0.grid(True)
     axis0.legend()
     axis0.axis("equal")
-
-    x, y = trajectory[-1, 0], trajectory[-1, 1]
-    label_text = f"({x:.2f}, {y:.2f})"
-    axis0.plot(x, y, "o", markersize=8, color="red")  # 'o' creates a circle marker
-    axis0.text(
-        x, y + 0.05, label_text, ha="center", va="bottom", fontsize=10, color="blue"
-    )
 
     axis1.set_title("Deslocamentos absolutos (px)")
     absolute_displacements = np.linalg.norm(displacements, axis=1)
@@ -46,6 +40,19 @@ def plot_displacements_2d(args, path, trajectory, displacements):
     axis2.set_title("Fase dos deslocamentos (rad)")
     phase = np.arctan2(displacements[:, 1], displacements[:, 0])
     axis2.plot(phase)
+
+    if args.draw_vertices:
+        t = np.array(trajectory.reshape((-1, 1, 2)), dtype=np.float32)
+        epsilon = np.max(trajectory.reshape(-1)) * 0.1
+        polygonal_trajectory = cv2.approxPolyDP(t, epsilon, False)
+
+        for x, y in polygonal_trajectory.reshape((-1, 2)):
+            if abs(x) + abs(y) > 0.0001:
+                label_text = f"({x:.2f}, {y:.2f})"
+                axis0.plot(x, y, "o", markersize=4, color="red")  # 'o' creates a circle marker
+                axis0.text(
+                    x, y + 1., label_text, ha="center", va="bottom", fontsize=10, color="blue"
+                )
 
     plt.savefig(path.with_suffix(".jpg"))
     plt.close()
@@ -241,6 +248,11 @@ if __name__ == "__main__":
         "--force-processing",
         "-f",
         help="ignore existing caches and (re)process displacements",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--draw-vertices",
+        help="draw vertices on the curve",
         action="store_true",
     )
 
