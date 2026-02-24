@@ -231,7 +231,7 @@ def main(args):
 
     if args.recursive:
         for root, dirs, files in pathlib.Path(args.path).walk():
-            for file in files:
+            for file in sorted(files):
                 if file[-4:] != ".zip":
                     continue
 
