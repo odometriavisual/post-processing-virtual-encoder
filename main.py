@@ -54,7 +54,7 @@ def plot_displacements_2d(args, path, trajectory, displacements):
                     x, y + 1., label_text, ha="center", va="bottom", fontsize=10, color="blue"
                 )
 
-    plt.savefig(path.with_suffix(".jpg"))
+    plt.savefig(path.with_suffix("." + args.reconstruction_format))
     plt.close()
 
 
@@ -254,6 +254,13 @@ if __name__ == "__main__":
         "--draw-vertices",
         help="draw vertices on the curve",
         action="store_true",
+    )
+
+    parser.add_argument(
+        "--reconstruction-format",        
+        help="format to save the reconstructions",
+        action="store",
+        default="jpg",
     )
 
     parser.add_argument("path", nargs="?", default=False)
