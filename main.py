@@ -56,7 +56,7 @@ def compute_displacements(path):
 
     odometer = VisualOdometer(
         ensaio.get_img(0)[1].shape,
-        frequency_window_params={"factor": 1.0},
+        frequency_window_params={"factor": 0.1},
         async_mode=True,
     )
     displacements, quaternions, timestamps = [], [], []
