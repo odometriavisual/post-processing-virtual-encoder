@@ -27,6 +27,13 @@ def plot_displacements_2d(args, path, trajectory, displacements):
 
     axis0.plot(trajectory[:, 0], trajectory[:, 1], label="Trajetória")
 
+    if args.reference_trajectory is not None:
+        axis0.plot(
+            args.reference_trajectory[:, 1],
+            args.reference_trajectory[:, 2],
+            label="Referência",
+            color="hotpink",
+        )
 
     axis0.set_title(f"{path.stem}")
     axis0.grid(True)
@@ -49,9 +56,17 @@ def plot_displacements_2d(args, path, trajectory, displacements):
         for x, y in polygonal_trajectory.reshape((-1, 2)):
             if abs(x) + abs(y) > 0.0001:
                 label_text = f"({x:.2f}, {y:.2f})"
-                axis0.plot(x, y, "o", markersize=4, color="red")  # 'o' creates a circle marker
+                axis0.plot(
+                    x, y, "o", markersize=4, color="red"
+                )  # 'o' creates a circle marker
                 axis0.text(
-                    x, y + 1., label_text, ha="center", va="bottom", fontsize=10, color="blue"
+                    x,
+                    y + 1.0,
+                    label_text,
+                    ha="center",
+                    va="bottom",
+                    fontsize=10,
+                    color="blue",
                 )
 
     plt.savefig(path.with_suffix("." + args.reconstruction_format))
@@ -205,6 +220,15 @@ def process_ensaio(args, path):
 
 
 def main(args):
+    if args.reference_trajectory is not None:
+        args.reference_trajectory = np.load(args.reference_trajectory)["arr_0"]
+        theta = np.radians(float(args.rotate_reference))
+        c, s = np.cos(theta), np.sin(theta)
+        R = np.array(((c, -s), (s, c)))
+
+        args.reference_trajectory[:, 1:3] -= args.reference_trajectory[0, 1:3]
+        args.reference_trajectory[:, 1:3] = (R @ args.reference_trajectory[:, 1:3].T).T
+
     if args.recursive:
         for root, dirs, files in pathlib.Path(args.path).walk():
             for file in files:
@@ -240,6 +264,13 @@ if __name__ == "__main__":
         action="store",
     )
     parser.add_argument(
+        "--rotate-reference",
+        "--rotref",
+        help="correction rotation for the reference trajectory in degrees",
+        action="store",
+        default=0,
+    )
+    parser.add_argument(
         "--px",
         help="ignore spatial resolution and generate results in pixels",
         action="store_true",
@@ -257,7 +288,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--reconstruction-format",        
+        "--reconstruction-format",
         help="format to save the reconstructions",
         action="store",
         default="jpg",
