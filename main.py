@@ -17,13 +17,15 @@ def plot_displacements_2d(args, path, trajectory, displacements):
     axis1 = plt.subplot2grid((2, 3), (0, 2), 1, 1)
     axis2 = plt.subplot2grid((2, 3), (1, 2), 1, 1)
 
-    axis0.plot(trajectory[:, 0], trajectory[:, 1], label="Trajetória")
     if args.px:
         axis0.set_xlabel("Deslocamento X / (px)")
         axis0.set_ylabel("Deslocamento Y / (px)")
     else:
         axis0.set_xlabel("Deslocamento X / (mm)")
         axis0.set_ylabel("Deslocamento Y / (mm)")
+        trajectory /= 20.601
+
+    axis0.plot(trajectory[:, 0], trajectory[:, 1], label="Trajetória")
 
     axis0.set_title(f"{path.stem}")
     axis0.grid(True)
