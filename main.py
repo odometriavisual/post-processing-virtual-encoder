@@ -6,30 +6,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from post_processing.plot import plot_2d
-from post_processing.processing import compute_displacements, calibrate_spatial_resolution
-
-
-def try_load(path):
-    if path.is_file():
-        data = np.load(path, allow_pickle=True)
-        return (
-            data["trajectory"],
-            data["displacements"],
-            data["quaternions"],
-            data["timestamps"],
-        )
-
-    return False
-
-
-def save(path, trajectory, displacements, quaternions, timestamps):
-    np.savez(
-        path,
-        trajectory=trajectory,
-        displacements=displacements,
-        quaternions=quaternions,
-        timestamps=timestamps,
-    )
+from post_processing.processing import (
+    compute_displacements,
+    calibrate_spatial_resolution,
+)
+from post_processing.utils.cache import (
+    try_load_displacement_cache,
+    save_displacement_cache,
+)
 
 
 def process_ensaio(args, path):
@@ -43,13 +27,13 @@ def process_ensaio(args, path):
             plt.close()
 
         else:
-            data = try_load(path.with_suffix(".npz"))
+            data = try_load_displacement_cache(path.with_suffix(".npz"))
 
             if not data or args.force_processing:
                 trajectory, displacements, quaternions, timestamps = (
                     compute_displacements(path)
                 )
-                save(
+                save_displacement_cache(
                     path.with_suffix(".npz"),
                     trajectory,
                     displacements,
