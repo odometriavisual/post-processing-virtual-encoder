@@ -3,9 +3,8 @@ import pathlib
 import argparse
 
 import numpy as np
-import matplotlib.pyplot as plt
 
-from post_processing.plot import plot_2d
+from post_processing.plot import plot_2d, plot_circle_and_bb_box
 from post_processing.processing import (
     compute_displacements,
     calibrate_spatial_resolution,
@@ -20,12 +19,7 @@ def process_ensaio(args, path):
     try:
         if args.calibration:
             avg_size, avg_img = calibrate_spatial_resolution(path)
-            plt.axis("off")
-            plt.title(f"Estimated circle diameter = {avg_size:.3f} px")
-            plt.imshow(avg_img)
-            plt.savefig(path.with_suffix(".jpg"))
-            plt.close()
-
+            plot_circle_and_bb_box(path, avg_size, avg_img)
         else:
             data = try_load_displacement_cache(path.with_suffix(".npz"))
 
