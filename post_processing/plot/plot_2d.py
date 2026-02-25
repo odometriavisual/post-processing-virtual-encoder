@@ -9,7 +9,7 @@ def __approximate_polygonal_trajectory(trajectory):
     polygonal_trajectory = cv2.approxPolyDP(reshaped_trajectory, epsilon, False)
     return polygonal_trajectory.reshape((-1, 2))
 
-def plot_2d(args, path, trajectory, displacements):
+def plot_2d(args, path, trajectory, displacements, spatial_resolution):
     plt.figure(figsize=(10, 6))
     axis0 = plt.subplot2grid((2, 3), (0, 0), 2, 2)
     axis1 = plt.subplot2grid((2, 3), (0, 2), 1, 1)
@@ -21,7 +21,7 @@ def plot_2d(args, path, trajectory, displacements):
     else:
         axis0.set_xlabel("Deslocamento X / (mm)")
         axis0.set_ylabel("Deslocamento Y / (mm)")
-        trajectory /= 20.601
+        trajectory /= spatial_resolution
 
     axis0.plot(trajectory[:, 0], trajectory[:, 1], label="Trajetória")
 

@@ -38,7 +38,7 @@ def process_ensaio(args, path):
                 print(f"Found existing cache for {path.stem}, using it...")
                 trajectory, displacements, quaternions, timestamps = data
 
-            plot_2d(args, path, trajectory, abs(displacements))
+            plot_2d(args, path, trajectory, displacements, 20.601)
 
     except Exception as e:
         print(f"Error processing {path.stem}: {e}")
