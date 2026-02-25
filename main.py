@@ -2,108 +2,11 @@ import traceback
 import pathlib
 import argparse
 
-import matplotlib.pyplot as plt
 import numpy as np
-import tqdm
-import cv2
-from visual_odometer import VisualOdometer
+import matplotlib.pyplot as plt
 
 from post_processing.plot import plot_2d
-from post_processing.utils.ensaio import EnsaioReader
-
-
-def compute_displacements(path):
-    ensaio = EnsaioReader(path)
-
-    odometer = VisualOdometer(
-        ensaio.get_img(0)[1].shape,
-        frequency_window_params={"factor": 0.1},
-        async_mode=True,
-    )
-    displacements, quaternions, timestamps = [], [], []
-
-    imgs = ensaio.get_all_imgs()
-
-    for i, (timestamp, img) in tqdm.tqdm(
-        enumerate(imgs), desc=f"{path.stem}", total=len(imgs)
-    ):
-        odometer.feed_image(img)
-
-        dx, dy = odometer.get_displacement()
-        displacements.append([dx, dy])
-        quaternions.append([1, 0, 0, 0])
-        timestamps.append(timestamp)
-
-    displacements = np.array(displacements)
-    quaternions = np.array(quaternions)
-    timestamps = np.array(timestamps)
-    trajectory = np.cumsum(displacements, axis=0)
-
-    return trajectory, displacements, quaternions, timestamps
-
-
-def find_circle_and_bbox(frame, min_radius=0, max_radius=0):
-    gray = cv2.medianBlur(frame, 5)
-
-    circles = cv2.HoughCircles(
-        gray,
-        cv2.HOUGH_GRADIENT_ALT,
-        dp=1,
-        minDist=20,
-        param1=300,
-        param2=0.90,
-        minRadius=min_radius,
-        maxRadius=max_radius,
-    )
-
-    if circles is not None:
-        x, y, r = circles[0][0]
-        d = 2 * r
-
-        # bounding box
-        top_left = (x - r, y - r)
-        bottom_right = (x + r, y + r)
-
-        cv2.circle(frame, (int(round(x)), int(round(y))), int(round(r)), (0, 255, 0), 1)
-        cv2.rectangle(
-            frame,
-            np.int32(np.around(top_left)),
-            np.int32(np.around(bottom_right)),
-            (0, 0, 255),
-            1,
-        )
-
-        return float(d), float(d), float(r), frame
-    else:
-        return None, None, None, frame
-
-
-def calibrate_spatial_resolution(path):
-    ensaio = EnsaioReader(path)
-    imgs = ensaio.get_all_imgs()
-    avg_img = np.zeros_like(ensaio.get_img(0)[1], dtype=np.float32)
-    avg_size = 0
-
-    for i, (timestamp, img) in tqdm.tqdm(
-        enumerate(imgs), desc=f"{path.stem}", total=len(imgs)
-    ):
-        width, height, radius, output_img = find_circle_and_bbox(
-            ensaio.get_img(0)[1], min_radius=12, max_radius=600
-        )
-
-        avg_img += output_img
-
-        if width and height:
-            avg_size += 2 * radius
-
-    avg_img /= len(imgs)
-    avg_size /= len(imgs)
-
-    plt.axis("off")
-    plt.title(f"Estimated circle diameter = {avg_size:.3f} px")
-    plt.imshow(avg_img)
-    plt.savefig(path.with_suffix(".jpg"))
-    plt.close()
+from post_processing.processing import compute_displacements, calibrate_spatial_resolution
 
 
 def try_load(path):
@@ -132,7 +35,12 @@ def save(path, trajectory, displacements, quaternions, timestamps):
 def process_ensaio(args, path):
     try:
         if args.calibration:
-            calibrate_spatial_resolution(path)
+            avg_size, avg_img = calibrate_spatial_resolution(path)
+            plt.axis("off")
+            plt.title(f"Estimated circle diameter = {avg_size:.3f} px")
+            plt.imshow(avg_img)
+            plt.savefig(path.with_suffix(".jpg"))
+            plt.close()
 
         else:
             data = try_load(path.with_suffix(".npz"))
