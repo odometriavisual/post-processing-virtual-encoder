@@ -1,6 +1,7 @@
 import traceback
 import pathlib
 import argparse
+import csv
 
 import numpy as np
 
@@ -13,6 +14,16 @@ from post_processing.utils.cache import (
     try_load_displacement_cache,
     save_displacement_cache,
 )
+
+
+def load_override_data(path):
+    override = {}
+    with open(path, newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            override[row["name"]] = {"px_p_mm": float(row["px_p_mm"])}
+
+    return override
 
 
 def process_ensaio(args, path):
@@ -38,7 +49,8 @@ def process_ensaio(args, path):
                 print(f"Found existing cache for {path.stem}, using it...")
                 trajectory, displacements, quaternions, timestamps = data
 
-            plot_2d(args, path, trajectory, displacements, 20.601)
+            px_p_mm = args.override.get(path.stem, 20.601)["px_p_mm"]
+            plot_2d(args, path, trajectory, displacements, px_p_mm)
 
     except Exception as e:
         print(f"Error processing {path.stem}: {e}")
@@ -53,6 +65,9 @@ def main(args):
 
         args.reference_trajectory[:, 1:3] -= args.reference_trajectory[0, 1:3]
         args.reference_trajectory[:, 1:3] = (R @ args.reference_trajectory[:, 1:3].T).T
+
+    if args.override:
+        args.override = load_override_data(args.override)
 
     if args.recursive:
         for root, dirs, files in pathlib.Path(args.path).walk():
@@ -86,6 +101,11 @@ if __name__ == "__main__":
         "--reference-trajectory",
         "--rt",
         help="provide a npz file containing the reference trajectory",
+        action="store",
+    )
+    parser.add_argument(
+        "--override",
+        help="provide a csv data containing parameter overrides for individual ensaios",
         action="store",
     )
     parser.add_argument(
