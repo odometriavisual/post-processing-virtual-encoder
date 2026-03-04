@@ -49,7 +49,7 @@ def process_ensaio(args, path):
                 print(f"Found existing cache for {path.stem}, using it...")
                 trajectory, displacements, quaternions, timestamps = data
 
-            px_p_mm = args.override.get(path.stem, 20.601)["px_p_mm"]
+            px_p_mm = args.override.get(path.stem, {"px_p_mm": 20.601})["px_p_mm"]
             plot_2d(args, path, trajectory, displacements, px_p_mm)
 
     except Exception as e:
@@ -68,6 +68,8 @@ def main(args):
 
     if args.override:
         args.override = load_override_data(args.override)
+    else:
+        args.override = dict()
 
     if args.recursive:
         for root, dirs, files in pathlib.Path(args.path).walk():

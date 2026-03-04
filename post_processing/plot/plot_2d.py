@@ -3,11 +3,14 @@ import cv2
 import matplotlib.pyplot as plt
 
 def __approximate_polygonal_trajectory(trajectory):
-    epsilon = np.max(trajectory.reshape(-1)) * 0.1
-    reshaped_trajectory = np.array(trajectory.reshape((-1, 1, 2)), dtype=np.float32)
-
-    polygonal_trajectory = cv2.approxPolyDP(reshaped_trajectory, epsilon, False)
-    return polygonal_trajectory.reshape((-1, 2))
+    # reshaped_trajectory = np.array(trajectory.reshape((-1, 1, 2)), dtype=np.float32)
+    # epsilon = np.max(trajectory.reshape(-1)) * 0.1
+    # polygonal_trajectory = cv2.approxPolyDP(reshaped_trajectory, epsilon, False)
+    # return polygonal_trajectory.reshape((-1, 2))
+    v1 = trajectory[(trajectory[:, 0] + trajectory[:, 1]).argmax()]
+    v2 = trajectory[(trajectory[:, 0] - trajectory[:, 1]).argmax()]
+    v3 = trajectory[-1]
+    return np.array([v1, v2, v3])
 
 def plot_2d(args, path, trajectory, displacements, spatial_resolution):
     plt.figure(figsize=(10, 6))
