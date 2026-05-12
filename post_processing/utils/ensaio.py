@@ -92,13 +92,14 @@ class EnsaioReader:
     def get_img(self, i: int) -> (int, NDArray):
         filename = self.__imgs[i]
         try:
-            return (
-                int(Path(filename).stem),
-                cv2.imdecode(
+            frame = cv2.imdecode(
                     np.frombuffer(self.__zip.read(filename), dtype=np.uint8),
-                    cv2.IMREAD_GRAYSCALE,
-                ),
+                    cv2.IMREAD_COLOR,
             )
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+
+            return (int(Path(filename).stem), frame)
+
         except KeyboardInterrupt:
             pass
 
@@ -106,15 +107,14 @@ class EnsaioReader:
         imgs = []
         try:
             for filename in self.__imgs:
-                imgs.append(
-                    (
-                        int(Path(filename).stem),
-                        cv2.imdecode(
-                            np.frombuffer(self.__zip.read(filename), dtype=np.uint8),
-                            cv2.IMREAD_GRAYSCALE,
-                        ),
-                    )
+                frame = cv2.imdecode(
+                    np.frombuffer(self.__zip.read(filename), dtype=np.uint8),
+                    cv2.IMREAD_COLOR,
                 )
+                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+
+                imgs.append((int(Path(filename).stem), frame))
             return imgs
+
         except KeyboardInterrupt:
             return []

@@ -54,6 +54,7 @@ def process_ensaio(args, path):
 
     except Exception as e:
         print(f"Error processing {path.stem}: {e}")
+        traceback.print_exc()
 
 
 def main(args):
@@ -146,7 +147,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.path:
-        main(args)
+        try:
+            main(args)
+        except KeyboardInterrupt:
+            pass
     else:
         try:
             from post_processing.ui.menu_interface import show_main_menu
