@@ -75,8 +75,9 @@ def main(args):
     else:
         args.override = dict()
 
-    if args.recursive:
-        for root, dirs, files in pathlib.Path(args.path).walk():
+    path = pathlib.Path(args.path)
+    if path.is_dir():
+        for root, dirs, files in path.walk():
             for file in sorted(files):
                 if file[-4:] != ".zip":
                     continue
@@ -84,7 +85,7 @@ def main(args):
                 path = root / pathlib.Path(file)
                 process_ensaio(args, path)
     else:
-        process_ensaio(args, pathlib.Path(args.path))
+        process_ensaio(args, path)
 
 
 if __name__ == "__main__":
@@ -94,9 +95,6 @@ if __name__ == "__main__":
         + "for recontruction and calibration purposes.",
     )
 
-    parser.add_argument(
-        "--recursive", "-r", help="recurses over directories", action="store_true"
-    )
     parser.add_argument(
         "--calibration",
         "-c",
