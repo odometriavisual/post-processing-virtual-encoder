@@ -52,6 +52,9 @@ def process_ensaio(args, path):
             px_p_mm = args.override.get(path.stem, {"px_p_mm": 20.601})["px_p_mm"]
             plot_2d(args, path, trajectory, displacements, px_p_mm)
 
+    except KeyboardInterrupt as e:
+        raise e
+
     except Exception as e:
         print(f"Error processing {path.stem}: {e}")
         traceback.print_exc()
