@@ -5,8 +5,8 @@ from post_processing.utils.ensaio import EnsaioReader
 
 
 def find_circle_and_bbox(frame, min_radius=0, max_radius=0):
-    # gray = cv2.GaussianBlur(frame, (11, 11), 5)
-    gray = cv2.medianBlur(frame, 11)
+    gray = cv2.GaussianBlur(frame, (7, 7), 9999999)
+    # gray = cv2.medianBlur(frame, 5)
 
     circles = cv2.HoughCircles(
         gray,
