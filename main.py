@@ -5,7 +5,7 @@ import csv
 
 import numpy as np
 
-from post_processing.plot import plot_2d, plot_circle_and_bb_box
+from post_processing.plot import plot_2d, plot_3d, plot_circle_and_bb_box
 from post_processing.processing import (
     compute_displacements,
     calibrate_spatial_resolution,
@@ -50,7 +50,12 @@ def process_ensaio(args, path):
                 trajectory, displacements, quaternions, timestamps = data
 
             px_p_mm = args.override.get(path.stem, {"px_p_mm": 20.601})["px_p_mm"]
-            plot_2d(args, path, trajectory, displacements, px_p_mm)
+
+            if vars(args)["3d"]:
+                plot_3d(args, path, displacements, quaternions, px_p_mm)
+
+            else:
+                plot_2d(args, path, trajectory, displacements, px_p_mm)
 
     except KeyboardInterrupt as e:
         raise e
@@ -99,6 +104,12 @@ if __name__ == "__main__":
         "--calibration",
         "-c",
         help="calibration routine using bouding boxes",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--3d",
+        "-3",
+        help="3d reconstruction",
         action="store_true",
     )
     parser.add_argument(
