@@ -9,10 +9,10 @@ from post_processing.utils.imu_tools import fast_rot, rotate_vector
 def plot_3d(args, path, list_displacements, list_quaternions, px_p_mm):
     # Lista com as variações de deslocamento
     variations = [
-        [1, 2],
+        # [1, 2],
         # [1, 3],
         # [2, 1],
-        # [2, 3],
+        [2, 3],
         # [3, 2],
         # [3, 1]
     ]
@@ -147,7 +147,7 @@ def plot_3d(args, path, list_displacements, list_quaternions, px_p_mm):
 
         #title_values = [value_map[order[1]], value_map[order[2]], value_map[order[3]]]
         title = ", ".join(map(str, order))
-        calculate_and_plot(rotation_base_1, rotation_base_2, ax, title, method="scipy_unitary", dx_dy_multiplyer = [1,1])
+        calculate_and_plot(rotation_base_1, rotation_base_2, ax, title, method="scipy_unitary", dx_dy_multiplyer = [1, 1])
 
     # Ajustar layout e mostrar o gráfico
     plt.tight_layout()

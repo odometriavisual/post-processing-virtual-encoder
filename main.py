@@ -14,6 +14,7 @@ from post_processing.utils.cache import (
     try_load_displacement_cache,
     save_displacement_cache,
 )
+from post_processing.utils.ensaio import EnsaioReader
 
 
 def load_override_data(path):
@@ -33,17 +34,19 @@ def process_ensaio(args, path):
             plot_circle_and_bb_box(path, avg_size, avg_img)
         else:
             data = try_load_displacement_cache(path.with_suffix(".npz"))
+            ensaio = EnsaioReader(path)
 
             if not data or args.force_processing:
                 trajectory, displacements, quaternions, timestamps = (
-                    compute_displacements(path)
+                    compute_displacements(ensaio)
                 )
+
                 save_displacement_cache(
                     path.with_suffix(".npz"),
                     trajectory,
                     displacements,
                     quaternions,
-                    timestamps,
+                    timestamps
                 )
             else:
                 print(f"Found existing cache for {path.stem}, using it...")
