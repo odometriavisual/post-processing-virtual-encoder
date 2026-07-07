@@ -26,7 +26,7 @@ def compute_displacements(ensaio: EnsaioReader):
 
     imgs = ensaio.get_all_imgs()
 
-    unmatched_quaternions = np.array([[data["timestamp"], data["qx"], data["qy"], data["qz"], data["qw"]] for data in ensaio.get_imu_data()])
+    unmatched_quaternions = np.array([[data["timestamp"], data["qw"], data["qx"], data["qy"], data["qz"]] for data in ensaio.get_imu_data()])
     quaternions = []
     timestamps = []
 

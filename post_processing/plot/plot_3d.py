@@ -6,7 +6,7 @@ from scipy.spatial.transform import Rotation as R
 
 from post_processing.utils.imu_tools import fast_rot, rotate_vector
 
-def plot_3d(args, path, list_displacements, list_quaternions, px_p_mm):
+def plot_3d(args, path, list_displacements, list_quaternions, spatial_resolution):
     # Lista com as variações de deslocamento
     variations = [
         # [1, 2],
@@ -83,7 +83,7 @@ def plot_3d(args, path, list_displacements, list_quaternions, px_p_mm):
                 raise Exception("function calculate_and_plot invalid method")
 
             # Acumular o deslocamento
-            position += displacement_3d
+            position += displacement_3d / spatial_resolution
 
             # Armazenar a posição acumulada
             trajectory.append(position.copy())
@@ -113,7 +113,7 @@ def plot_3d(args, path, list_displacements, list_quaternions, px_p_mm):
         ax.legend()
 
         # Mostrar o deslocamento total (última posição) em mm
-        final_position = position * px_p_mm
+        final_position = position
         ax.text(
             final_position[0], final_position[1], final_position[2],
             f'({final_position[0]:.1f} mm, {final_position[1]:.1f} mm, {final_position[2]:.1f} mm)',

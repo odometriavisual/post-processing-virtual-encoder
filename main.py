@@ -52,7 +52,7 @@ def process_ensaio(args, path):
                 print(f"Found existing cache for {path.stem}, using it...")
                 trajectory, displacements, quaternions, timestamps = data
 
-            px_p_mm = args.override.get(path.stem, {"px_p_mm": 20.601})["px_p_mm"]
+            px_p_mm = ensaio.get_px_p_mm() * 2
 
             if vars(args)["3d"]:
                 plot_3d(args, path, displacements, quaternions, px_p_mm)
