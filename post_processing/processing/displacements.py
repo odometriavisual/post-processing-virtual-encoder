@@ -1,20 +1,35 @@
+from queue import Queue, ShutDown as QueueShutdown
+from threading import Thread
+
 import numpy as np
-import tqdm
+from tqdm import tqdm
 
 from visual_odometer import VisualOdometer
 from post_processing.utils.ensaio import EnsaioReader
 
 def _lower_bound(arr, val):
-    for i in range(len(arr)):
-        if arr[i] > val:
-            return max(0, i-1)
+    if len(arr) <= 1:
+        return 0
 
-    return len(arr)-1
+    mid = len(arr)//2
+
+    if arr[mid] > val:
+        return _lower_bound(arr[mid+1:], val) + mid
+
+    else:
+        return _lower_bound(arr[:mid+1], val)
 
 
 def _interpolate_quaternion(timestamp, quaternions):
     i = _lower_bound(quaternions[:,0], timestamp)
-    return quaternions[i,1:]
+
+    t0, q0 = quaternions[i,0], quaternions[i,1:]
+
+    if len(quaternions) > i+2:
+        t1, q1 = quaternions[i+1,0], quaternions[i+1,1:]
+        return (timestamp - t0) * (q1 - q0) / (t1 - t0) + q0
+
+    return q0
     
 
 def compute_displacements(ensaio: EnsaioReader):
@@ -24,16 +39,27 @@ def compute_displacements(ensaio: EnsaioReader):
         async_mode=True,
     )
 
-    imgs = ensaio.get_all_imgs()
+    imgs_queue = Queue()
+
+    def _pub_imgs():
+        for i in range(ensaio.get_img_count()):
+            imgs_queue.put(ensaio.get_img(i))
+
+        imgs_queue.shutdown(False)
+
+    Thread(target=_pub_imgs, daemon=True).start()
 
     unmatched_quaternions = np.array([[data["timestamp"], data["qw"], data["qx"], data["qy"], data["qz"]] for data in ensaio.get_imu_data()])
     quaternions = []
     timestamps = []
 
     displacements = []
-    for i, (timestamp, img) in tqdm.tqdm(
-        enumerate(imgs), desc=f"{ensaio.get_name()}", total=len(imgs)
-    ):
+    for i in tqdm(range(ensaio.get_img_count())):
+        try:
+            timestamp, img = imgs_queue.get()
+        except QueueShutdown:
+            break
+
         odometer.feed_image(img)
 
         dx, dy = odometer.get_displacement()
