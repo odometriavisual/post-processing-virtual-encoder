@@ -1,39 +1,12 @@
 from queue import Queue, ShutDown as QueueShutdown
 from threading import Thread
 
+from scipy.spatial.transform import Slerp, Rotation
 import numpy as np
 from tqdm import tqdm
 
 from visual_odometer import VisualOdometer
 from post_processing.utils.ensaio import EnsaioReader
-
-
-def _upper_bound(arr, val):
-    # finds first element in an ordered array such that arr[i] > val
-    def _helper(first, last):
-        if first == last:
-            return first
-
-        mid = (first + last) // 2
-
-        if arr[mid] > val:
-            return _helper(first, mid)
-
-        return _helper(mid + 1, last)
-
-    return _helper(0, len(arr) - 1)
-
-
-def _interpolate_quaternion(timestamp, quaternions):
-    i = _upper_bound(quaternions[:, 0], timestamp)
-
-    t1, q1 = quaternions[i, 0], quaternions[i, 1:]
-
-    if i >= 1:
-        t0, q0 = quaternions[i - 1, 0], quaternions[i - 1, 1:]
-        return (timestamp - t0) * (q1 - q0) / (t1 - t0) + q0
-
-    return q1
 
 
 def compute_displacements(ensaio: EnsaioReader):
@@ -53,32 +26,32 @@ def compute_displacements(ensaio: EnsaioReader):
 
     Thread(target=_pub_imgs, daemon=True).start()
 
-    unmatched_quaternions = np.array(
-        [
-            [data["timestamp"], data["qw"], data["qx"], data["qy"], data["qz"]]
-            for data in ensaio.get_imu_data()
-        ]
+    imu_data = ensaio.get_imu_data()
+    interpolate_quaternion = Slerp(
+        np.array([d["timestamp"] for d in imu_data]),
+        Rotation.from_quat([[d["qx"], d["qy"], d["qz"], d["qw"]] for d in imu_data])
     )
-    quaternions = []
+    
     timestamps = []
-
     displacements = []
+
     for i in tqdm(range(ensaio.get_img_count())):
         try:
             timestamp, img = imgs_queue.get()
         except QueueShutdown:
             break
 
-        odometer.feed_image(img)
+        # dx, dy = 0, 0
 
+        odometer.feed_image(img)
         dx, dy = odometer.get_displacement()
+
         displacements.append([dx, dy])
         timestamps.append(timestamp)
 
-        quaternions.append(_interpolate_quaternion(timestamp, unmatched_quaternions))
+    quaternions = interpolate_quaternion(timestamps[:-1])
 
     displacements = np.array(displacements)
-    quaternions = np.array(quaternions)
     trajectory = np.cumsum(displacements, axis=0)
 
     return trajectory, displacements, quaternions, timestamps
