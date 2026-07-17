@@ -6,6 +6,7 @@ def plot(args, trajectory, title):
     # Configurar o gráfico 3D com subplots
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
+    ax.set_proj_type("ortho")
 
     # Plotar a trajetória 3D
     ax.plot(trajectory[:, 0], trajectory[:, 1], trajectory[:, 2], label=title)
