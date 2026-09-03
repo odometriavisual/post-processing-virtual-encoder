@@ -1,11 +1,12 @@
-from queue import Queue, ShutDown as QueueShutdown
+from queue import Queue
+from queue import ShutDown as QueueShutdown
 from threading import Thread
 
-from scipy.spatial.transform import Slerp, Rotation
 import numpy as np
+from scipy.spatial.transform import Rotation, Slerp
 from tqdm import tqdm
-
 from visual_odometer import VisualOdometer
+
 from post_processing.utils.ensaio import EnsaioReader
 
 

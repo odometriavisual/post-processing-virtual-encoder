@@ -93,7 +93,7 @@ def main(args):
         args.reference_trajectory = np.load(args.reference_trajectory)["arr_0"]
         theta = np.radians(float(args.rotate_reference))
         c, s = np.cos(theta), np.sin(theta)
-        R = np.array(((c, -s), (s, c)))
+        R = np.array(((c, s), (-s, c)))
 
         args.reference_trajectory[:, 1:3] -= args.reference_trajectory[0, 1:3]
         args.reference_trajectory[:, 1:3] = (R @ args.reference_trajectory[:, 1:3].T).T
