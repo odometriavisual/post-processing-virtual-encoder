@@ -78,15 +78,11 @@ def compute_trajectory(odometry, rotations, rotation_base_1, rotation_base_2):
 
 
 def plot_3d(args, path, odometry, rotations, spatial_resolution):
-    # 1 é o azul
-    # 2 é o vermelho
-
     # A ordem é [0, rosa, azul, vermelho]
 
     rotation_base_1 = [0, 0, 1, 0]
     rotation_base_2 = [0, 0, 0, 1]
 
-    # title_values = [value_map[order[1]], value_map[order[2]], value_map[order[3]]]
     trajectory = compute_trajectory(
         odometry, rotations, rotation_base_1, rotation_base_2
     )

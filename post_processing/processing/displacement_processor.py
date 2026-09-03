@@ -61,7 +61,7 @@ def process_displacements(image_folder, force_reprocessing = False):
 
     print(f"Processando {len(image_files)} imagens...")
 
-    odometer = VisualOdometer(img_shape=(640, 480))
+    odometer = VisualOdometer(img_shape=(640, 480), displacement_estimation_method="orb")
     displacements, quaternions, timestamps = [], [], []
 
     for i, img_file in enumerate(image_files):

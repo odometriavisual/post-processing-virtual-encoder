@@ -13,6 +13,7 @@ def compute_displacements(ensaio: EnsaioReader):
     odometer = VisualOdometer(
         ensaio.get_img(0)[1].shape,
         frequency_window_params={"factor": 0.1},
+        displacement_estimation_method="svd",
         async_mode=True,
     )
 
@@ -41,12 +42,10 @@ def compute_displacements(ensaio: EnsaioReader):
         except QueueShutdown:
             break
 
-        # dx, dy = 0, 0
-
         odometer.feed_image(img)
-        dx, dy = odometer.get_displacement()
+        disp = odometer.get_displacement()
 
-        displacements.append([dx, dy])
+        displacements.append([-disp[0], disp[1]])
         timestamps.append(timestamp)
 
     quaternions = interpolate_quaternion(timestamps[:-1])

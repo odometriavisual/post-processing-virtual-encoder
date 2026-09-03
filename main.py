@@ -1,18 +1,18 @@
-import traceback
-import pathlib
 import argparse
 import csv
+import pathlib
+import traceback
 
 import numpy as np
 
 from post_processing.plot import plot_2d, plot_3d, plot_circle_and_bb_box
 from post_processing.processing import (
-    compute_displacements,
     calibrate_spatial_resolution,
+    compute_displacements,
 )
 from post_processing.utils.cache import (
-    try_load_displacement_cache,
     save_displacement_cache,
+    try_load_displacement_cache,
 )
 from post_processing.utils.ensaio import EnsaioReader
 
@@ -31,7 +31,12 @@ def process_ensaio(args, path):
     try:
         if args.calibration:
             avg_size, avg_img = calibrate_spatial_resolution(path)
-            plot_circle_and_bb_box(path, avg_size, avg_img)
+
+            return {
+                "avg_size": avg_size,
+                "avg_img": avg_img,
+            }
+
         else:
             data = try_load_displacement_cache(path.with_suffix(".npz"))
             ensaio = EnsaioReader(path)
@@ -54,11 +59,12 @@ def process_ensaio(args, path):
 
             px_p_mm = ensaio.get_px_p_mm() * 2
 
-            if vars(args)["3d"]:
-                plot_3d(args, path, displacements, quaternions, px_p_mm)
-
-            else:
-                plot_2d(args, path, trajectory, displacements, px_p_mm)
+            return {
+                "trajectory": trajectory,
+                "displacements": displacements,
+                "quaternions": quaternions,
+                "px_p_mm": px_p_mm,
+            }
 
     except KeyboardInterrupt as e:
         raise e
@@ -67,6 +73,20 @@ def process_ensaio(args, path):
         print(f"Error processing {path.stem}: {e}")
         traceback.print_exc()
 
+def plot(args, path, results):
+    try:
+        if args.calibration:
+            plot_circle_and_bb_box(path, results["avg_size"], results["avg_img"])
+        else:
+            if vars(args)["3d"]:
+                plot_3d(args, path, results["displacements"], results["quaternions"], results["px_p_mm"])
+
+            else:
+                plot_2d(args, path, results["trajectory"], results["displacements"], results["px_p_mm"])
+
+    except Exception as e:
+        print(f"Error plotting {path.stem}: {e}")
+        traceback.print_exc()
 
 def main(args):
     if args.reference_trajectory is not None:
@@ -92,8 +112,12 @@ def main(args):
 
                 path = root / pathlib.Path(file)
                 process_ensaio(args, path)
+                results = process_ensaio(args, path)
+                plot(args, path, results)
+
     else:
-        process_ensaio(args, path)
+        results = process_ensaio(args, path)
+        plot(args, path, results)
 
 
 if __name__ == "__main__":
