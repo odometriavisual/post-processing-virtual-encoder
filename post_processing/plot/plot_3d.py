@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def plot(args, trajectory, title):
@@ -53,39 +53,22 @@ def plot(args, trajectory, title):
     # )
 
 
-def compute_trajectory(odometry, rotations, rotation_base_1, rotation_base_2):
+def compute_trajectory(odometry, rotations, cam2imu):
     trajectory = []
     position = np.array([0.0, 0.0, 0.0])
 
     for displacement, r in zip(odometry, rotations):
-        dx, dy = displacement
-
-        quiver_position_1 = r.apply(
-            [rotation_base_1[1], rotation_base_1[2], rotation_base_1[3]]
-        )
-        quiver_position_2 = r.apply(
-            [rotation_base_2[1], rotation_base_2[2], rotation_base_2[3]]
-        )
-        dx_influence = quiver_position_1 * dx
-        dy_influence = quiver_position_2 * dy
-        displacement_3d = dx_influence + dy_influence
-
-        position += displacement_3d
-
+        position += r.apply(cam2imu @ displacement)
         trajectory.append(position.copy())
 
     return np.array(trajectory)
 
 
 def plot_3d(args, path, odometry, rotations, spatial_resolution):
-    # A ordem é [0, rosa, azul, vermelho]
+    # How the imu axis align with the camera axis, camex version
+    cam2imu = np.array([[0, 0], [-1, 0], [0, 1]])
 
-    rotation_base_1 = [0, 0, 1, 0]
-    rotation_base_2 = [0, 0, 0, 1]
-
-    trajectory = compute_trajectory(
-        odometry, rotations, rotation_base_1, rotation_base_2
-    )
+    trajectory = compute_trajectory(odometry, rotations, cam2imu)
 
     if args.px:
         plot(args, trajectory, path.stem)
@@ -95,5 +78,3 @@ def plot_3d(args, path, odometry, rotations, spatial_resolution):
     # Ajustar layout e mostrar o gráfico
     plt.tight_layout()
     plt.show()
-
-    # plt.ioff()
