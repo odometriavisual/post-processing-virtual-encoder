@@ -59,6 +59,9 @@ class EnsaioReader:
                             "qy": float(row["qy"]) if row["qy"] else 0.0,
                             "qz": float(row["qz"]) if row["qz"] else 0.0,
                             "qw": float(row["qw"]) if row["qw"] else 0.0,
+                            "acc_x": float(row["acc_x"]) if row["acc_x"] else 0.0,
+                            "acc_y": float(row["acc_y"]) if row["acc_y"] else 0.0,
+                            "acc_z": float(row["acc_z"]) if row["acc_z"] else 0.0,
                         }
                     )
 

@@ -28,6 +28,7 @@ def load_override_data(path):
 
 
 def process_ensaio(args, path):
+    print(f"Processing ensaio: {path}")
     try:
         if args.calibration:
             avg_size, avg_img = calibrate_spatial_resolution(path)
@@ -42,22 +43,27 @@ def process_ensaio(args, path):
             ensaio = EnsaioReader(path)
 
             if not data or args.force_processing:
-                trajectory, displacements, quaternions, timestamps = (
+                trajectory, displacements, quaternions, acc, timestamps = (
                     compute_displacements(ensaio)
                 )
+
+                px_p_mm = ensaio.get_px_p_mm()
 
                 save_displacement_cache(
                     path.with_suffix(".npz"),
                     trajectory,
                     displacements,
                     quaternions,
-                    timestamps
+                    acc,
+                    timestamps,
+                    px_p_mm
                 )
+
+
             else:
                 print(f"Found existing cache for {path.stem}, using it...")
-                trajectory, displacements, quaternions, timestamps = data
+                trajectory, displacements, quaternions, acc, timestamps, px_p_mm = data
 
-            px_p_mm = ensaio.get_px_p_mm() * 2
 
             return {
                 "trajectory": trajectory,
@@ -90,7 +96,11 @@ def plot(args, path, results):
 
 def main(args):
     if args.reference_trajectory is not None:
-        args.reference_trajectory = np.load(args.reference_trajectory)["arr_0"]
+        data = np.load(args.reference_trajectory)
+        args.reference_trajectory = np.zeros((len(data["x"]), 3))
+        args.reference_trajectory[:, 0] = data["timestamp"]
+        args.reference_trajectory[:, 1] = data["x"]
+        args.reference_trajectory[:, 2] = data["y"]
         theta = np.radians(float(args.rotate_reference))
         c, s = np.cos(theta), np.sin(theta)
         R = np.array(((c, s), (-s, c)))
@@ -111,7 +121,6 @@ def main(args):
                     continue
 
                 path = root / pathlib.Path(file)
-                process_ensaio(args, path)
                 results = process_ensaio(args, path)
                 plot(args, path, results)
 

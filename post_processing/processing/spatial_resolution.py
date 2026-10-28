@@ -1,12 +1,12 @@
-import numpy as np
 import cv2
+import numpy as np
 import tqdm
+
 from post_processing.utils.ensaio import EnsaioReader
 
 
 def find_circle_and_bbox(frame, min_radius=0, max_radius=0):
-    gray = cv2.GaussianBlur(frame, (7, 7), 9999999)
-    # gray = cv2.medianBlur(frame, 5)
+    gray = cv2.GaussianBlur(frame, None, 2.2)
 
     circles = cv2.HoughCircles(
         gray,
@@ -27,13 +27,13 @@ def find_circle_and_bbox(frame, min_radius=0, max_radius=0):
         top_left = (x - r, y - r)
         bottom_right = (x + r, y + r)
 
-        cv2.circle(gray, (int(round(x)), int(round(y))), int(round(r)), (0, 255, 0), 1)
+        cv2.circle(gray, (round(x), round(y)), round(r), (0, 0, 0), 2)
         cv2.rectangle(
             gray,
             np.int32(np.around(top_left)),
             np.int32(np.around(bottom_right)),
-            (0, 0, 255),
-            1,
+            (0, 0, 0),
+            2,
         )
 
         return float(d), float(d), float(r), gray

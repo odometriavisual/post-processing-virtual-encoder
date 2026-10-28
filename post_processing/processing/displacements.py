@@ -14,8 +14,8 @@ def compute_displacements(ensaio: EnsaioReader):
     odometer = VisualOdometer(
         ensaio.get_img(0)[1].shape,
         frequency_window_params={"factor": 0.1},
-        displacement_estimation_method="svd",
-        async_mode=True,
+        displacement_estimation_method="orb-affine",
+        async_mode=False,
     )
 
     imgs_queue = Queue()
@@ -29,10 +29,6 @@ def compute_displacements(ensaio: EnsaioReader):
     Thread(target=_pub_imgs, daemon=True).start()
 
     imu_data = ensaio.get_imu_data()
-    interpolate_quaternion = Slerp(
-        np.array([d["timestamp"] for d in imu_data]),
-        Rotation.from_quat([[d["qx"], d["qy"], d["qz"], d["qw"]] for d in imu_data])
-    )
     
     timestamps = []
     displacements = []
@@ -49,9 +45,18 @@ def compute_displacements(ensaio: EnsaioReader):
         displacements.append([-disp[0], disp[1]])
         timestamps.append(timestamp)
 
-    quaternions = interpolate_quaternion(timestamps[:-1])
+    try:
+        interpolate_quaternion = Slerp(
+            np.array([d["timestamp"] for d in imu_data]),
+            Rotation.from_quat([[d["qx"], d["qy"], d["qz"], d["qw"]] for d in imu_data])
+        )
+        quaternions = interpolate_quaternion(timestamps[:-1])
+
+    except Exception:
+        quaternions = []
 
     displacements = np.array(displacements)
     trajectory = np.cumsum(displacements, axis=0)
+    acc = np.array([[d["acc_x"], d["acc_y"], d["acc_z"]] for d in imu_data])
 
-    return trajectory, displacements, quaternions, timestamps
+    return trajectory, displacements, quaternions, acc, timestamps
