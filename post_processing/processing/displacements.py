@@ -14,7 +14,7 @@ def compute_displacements(ensaio: EnsaioReader):
     odometer = VisualOdometer(
         ensaio.get_img(0)[1].shape,
         frequency_window_params={"factor": 0.1},
-        displacement_estimation_method="orb-affine",
+        displacement_estimation_method="orb",
         async_mode=False,
     )
 
@@ -33,6 +33,7 @@ def compute_displacements(ensaio: EnsaioReader):
     timestamps = []
     displacements = []
 
+    theta = 0
     for i in tqdm(range(ensaio.get_img_count())):
         try:
             timestamp, img = imgs_queue.get()
@@ -42,7 +43,12 @@ def compute_displacements(ensaio: EnsaioReader):
         odometer.feed_image(img)
         disp = odometer.get_displacement()
 
-        displacements.append([-disp[0], disp[1]])
+        theta += -disp[2]
+        rot = np.array([[np.cos(theta), -np.sin(theta)],  [np.sin(theta),  np.cos(theta)]])
+
+        d = rot @ [-disp[0], disp[1]]
+
+        displacements.append(d)
         timestamps.append(timestamp)
 
     try:
