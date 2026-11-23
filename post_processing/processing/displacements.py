@@ -1,5 +1,5 @@
 from queue import Queue
-from queue import ShutDown as QueueShutdown
+# from queue import ShutDown as QueueShutdown
 from threading import Thread
 
 import numpy as np
@@ -20,13 +20,13 @@ def compute_displacements(ensaio: EnsaioReader):
 
     imgs_queue = Queue()
 
-    def _pub_imgs():
-        for i in range(ensaio.get_img_count()):
-            imgs_queue.put(ensaio.get_img(i))
+    # def _pub_imgs():
+    for i in range(ensaio.get_img_count()):
+        imgs_queue.put(ensaio.get_img(i))
 
-        imgs_queue.shutdown(False)
+        # imgs_queue.shutdown(False)
 
-    Thread(target=_pub_imgs, daemon=True).start()
+    # Thread(target=_pub_imgs, daemon=True).start()
 
     imu_data = ensaio.get_imu_data()
     
@@ -35,10 +35,10 @@ def compute_displacements(ensaio: EnsaioReader):
 
     theta = 0
     for i in tqdm(range(ensaio.get_img_count())):
-        try:
-            timestamp, img = imgs_queue.get()
-        except QueueShutdown:
-            break
+        # try:
+        timestamp, img = imgs_queue.get()
+        # except QueueShutdown:
+        #     break
 
         odometer.feed_image(img)
         disp = odometer.get_displacement()
