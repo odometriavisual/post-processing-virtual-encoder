@@ -44,10 +44,11 @@ def process_ensaio(args, path):
 
             if not data or args.force_processing:
                 trajectory, displacements, quaternions, acc, timestamps = (
-                    compute_displacements(ensaio)
+                    compute_displacements(args, ensaio)
                 )
 
                 px_p_mm = ensaio.get_px_p_mm()
+                algorithm = args.algorithm
 
                 save_displacement_cache(
                     path.with_suffix(".npz"),
@@ -56,13 +57,14 @@ def process_ensaio(args, path):
                     quaternions,
                     acc,
                     timestamps,
-                    px_p_mm
+                    px_p_mm,
+                    algorithm,
                 )
 
 
             else:
                 print(f"Found existing cache for {path.stem}, using it...")
-                trajectory, displacements, quaternions, acc, timestamps, px_p_mm = data
+                trajectory, displacements, quaternions, acc, timestamps, px_p_mm, algorithm = data
 
 
             return {
@@ -70,6 +72,7 @@ def process_ensaio(args, path):
                 "displacements": displacements,
                 "quaternions": quaternions,
                 "px_p_mm": px_p_mm,
+                "algorithm": algorithm,
             }
 
     except KeyboardInterrupt as e:
@@ -88,7 +91,7 @@ def plot(args, path, results):
                 plot_3d(args, path, results["displacements"], results["quaternions"], results["px_p_mm"])
 
             else:
-                plot_2d(args, path, results["trajectory"], results["displacements"], results["px_p_mm"])
+                plot_2d(args, path, results["trajectory"], results["displacements"], results["px_p_mm"], results["algorithm"])
 
     except Exception as e:
         print(f"Error plotting {path.stem}: {e}")
@@ -184,10 +187,19 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--reconstruction-format",
-        help="format to save the reconstructions",
+        "--plot-format",
+        help="format to save the plot",
         action="store",
         default="jpg",
+    )
+
+    parser.add_argument(
+        "--algorithm",
+        "-a",
+        help="Odometry algorithm to use",
+        choices=["svd", "orb", "orb-affine"],
+        action="store",
+        default="svd",
     )
 
     parser.add_argument("path", nargs="?", default=False)

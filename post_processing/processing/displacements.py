@@ -10,11 +10,11 @@ from visual_odometer import VisualOdometer
 from post_processing.utils.ensaio import EnsaioReader
 
 
-def compute_displacements(ensaio: EnsaioReader):
+def compute_displacements(args, ensaio: EnsaioReader):
     odometer = VisualOdometer(
         ensaio.get_img(0)[1].shape,
         frequency_window_params={"factor": 0.1},
-        displacement_estimation_method="orb",
+        displacement_estimation_method=args.algorithm,
         async_mode=False,
     )
 

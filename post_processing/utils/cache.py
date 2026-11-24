@@ -5,22 +5,24 @@ def try_load_displacement_cache(path):
     try:
         if path.is_file():
             data = np.load(path, allow_pickle=True)
+
             return (
                 data["trajectory"],
                 data["displacements"],
                 data["quaternions"],
                 data["acc"],
                 data["timestamps"],
-                data["px_p_mm"]
+                data["px_p_mm"],
+                np.array2string(data["algorithm"]),
             )
 
-    except:
+    except Exception:
         pass
 
     return False
 
 
-def save_displacement_cache(path, trajectory, displacements, quaternions, acc, timestamps, px_p_mm):
+def save_displacement_cache(path, trajectory, displacements, quaternions, acc, timestamps, px_p_mm, algorithm):
     np.savez(
         path,
         trajectory=trajectory,
@@ -29,4 +31,5 @@ def save_displacement_cache(path, trajectory, displacements, quaternions, acc, t
         acc=acc,
         timestamps=timestamps,
         px_p_mm=px_p_mm,
+        algorithm=algorithm,
     )

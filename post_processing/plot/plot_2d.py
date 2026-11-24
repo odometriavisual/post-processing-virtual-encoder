@@ -11,7 +11,7 @@ def __approximate_polygonal_trajectory(trajectory):
     v3 = trajectory[-1]
     return np.array([v1, v2, v3])
 
-def plot_2d(args, path, trajectory, displacements, spatial_resolution):
+def plot_2d(args, path, trajectory, displacements, spatial_resolution, algorithm):
     plt.figure(figsize=(10, 6))
     axis0 = plt.subplot2grid((2, 3), (0, 0), 2, 2)
     axis1 = plt.subplot2grid((2, 3), (0, 2), 1, 1)
@@ -35,16 +35,16 @@ def plot_2d(args, path, trajectory, displacements, spatial_resolution):
             color="hotpink",
         )
 
-    axis0.set_title(f"{path.stem}")
+    axis0.set_title(f"{path.stem} com {algorithm.upper()}")
     axis0.grid(True)
     axis0.legend()
     axis0.axis("equal")
 
-    axis1.set_title("Deslocamentos absolutos (px)")
+    axis1.set_title("Deslocamentos absolutos / (px)")
     absolute_displacements = np.linalg.norm(displacements, axis=1)
     axis1.plot(absolute_displacements)
 
-    axis2.set_title("Fase dos deslocamentos (rad)")
+    axis2.set_title("Fase dos deslocamentos / (rad)")
     phase = np.arctan2(displacements[:, 1], displacements[:, 0])
     axis2.plot(phase)
 
@@ -65,6 +65,6 @@ def plot_2d(args, path, trajectory, displacements, spatial_resolution):
                     color="blue",
                 )
 
-    plt.savefig(path.with_suffix("." + args.reconstruction_format))
+    plt.savefig(path.with_suffix("." + args.plot_format))
     plt.close()
 
